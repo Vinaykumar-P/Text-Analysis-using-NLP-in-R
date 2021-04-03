@@ -1,0 +1,46 @@
+#The text analysis step by step, the chat text used in International Conference of RPL.
+
+#R package “syuzhet”
+
+library(syuzhet)
+install.packages('syuzhet')
+#R package “wordcloud”
+library(wordcloud)
+#R package “tm”
+library(tm)
+#Read the file in “In_conf” text file from your local directory
+In_conf <- scan(file.choose(),"character",sep="\n")
+#convert a character vector to utf-8
+I_conf <- iconv(In_conf, to = 'utf-8')
+#Storing the structure for managing text file
+docs <- Corpus(VectorSource(I_conf))
+#Transform the data  : eliminate hypens ,colons etc..
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+docs <- tm_map(docs, toSpace, "/")
+docs <- tm_map(docs, toSpace, "@")
+docs <- tm_map(docs, toSpace, ":")
+docs <- tm_map(docs, toSpace, "\\|")
+#Convert the words in lower case
+docs <- tm_map(docs, content_transformer(tolower))
+#Remove numbers from the text
+docs <- tm_map(docs, removeNumbers)
+#Remove stop words
+docs <- tm_map(docs, removeWords, stopwords("english"))
+#Using “tm_map” of “tm” remove the unwanted words
+docs <- tm_map(docs, removeWords, c("everyone", "thank","s","christina","stokes","thanks","mary","paulus","anne","cecilia","can","siobhan","susan","sanna"))
+#Remove whitespace in text
+docs <- tm_map(docs, stripWhitespace)
+#Convert the text document in Document Term Matrix
+dtm <- TermDocumentMatrix(docs)
+#Convert the DTM in matrix
+m <- as.matrix(dtm)
+#Sorting the frequency of word in ascending order
+v <- sort(rowSums(m),decreasing=TRUE)
+#Converting in Data Frame
+d <- data.frame(word = names(v),freq=v)
+#Plot the barplot of top 10 most frequent word 
+barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word, col = c("chartreuse", "blue4","red","pink","dark green","orange","violet","light blue","yellow","light green", border = "black"), main ="Top 10 most frequent words", ylab = "Word frequencies")
+#Seeding to starting number to generate a sequence of random numbers
+set.seed(1234)
+#Generating Word Cloud.
+wordcloud(words = d$word, freq = d$freq, min.freq = 4, max.words=200, random.order=FALSE, rot.per=0.40, colors=brewer.pal(8, "Dark2"))
